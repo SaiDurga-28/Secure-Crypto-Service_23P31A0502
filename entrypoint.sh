@@ -2,13 +2,17 @@
 set -e
 
 # Copy cron jobs from /cron to /etc/cron.d and set permissions
-if [ -d /cron ]; then
-  for f in /cron/*; do
-    [ -f "$f" ] || continue
-    cp "$f" /etc/cron.d/$(basename "$f")
-    chmod 0644 /etc/cron.d/$(basename "$f")
-  done
-fi
+# Copy cron jobs from /cron (mounted) or /app/cron (from image) into /etc/cron.d and set permissions
+for SRC in /cron /app/cron; do
+  if [ -d "$SRC" ]; then
+    for f in "$SRC"/*; do
+      [ -f "$f" ] || continue
+      cp "$f" /etc/cron.d/$(basename "$f")
+      chmod 0644 /etc/cron.d/$(basename "$f")
+    done
+  fi
+done
+
 
 # Normalize line endings in /etc/cron.d
 for f in /etc/cron.d/*; do
