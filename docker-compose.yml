@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: totp-service:latest
+    container_name: totp-service
+    ports:
+      - "8080:8080"
+    volumes:
+      # persistent named volume for seed/other data
+      - seed-data:/data
+      # persistent named volume (for cron files/output)
+      - cron-output:/cron
+      # OPTIONAL: local PEM files for development (uncomment to use)
+      # - ./student_private.pem:/app/student_private.pem:ro
+      # - ./student_public.pem:/app/student_public.pem:ro
+      # - ./instructor_public.pem:/app/instructor_public.pem:ro
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+
+volumes:
+  seed-data:
+  cron-output:
