@@ -15,3 +15,8 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+data/seed.txt
+decrypted_seed.txt
+request_seed.py
+encrypted_seed.txt
+
