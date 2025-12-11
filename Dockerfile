@@ -1,44 +1,29 @@
-# ============================
-# Stage 1 - Builder
-# ============================
-FROM python:3.11-slim AS builder
-
-WORKDIR /build
-
-COPY requirements.txt .
-
-RUN pip install --prefix=/install -r requirements.txt
-
-
-# ============================
-# Stage 2 - Runtime
-# ============================
 FROM python:3.11-slim
 
 ENV TZ=UTC
-ENV DEBIAN_FRONTEND=noninteractive
-
 WORKDIR /app
 
-# Install system dependencies
+# Install cron + required tools
 RUN apt-get update && \
-    apt-get install -y cron tzdata && \
+    apt-get install -y cron && \
     rm -rf /var/lib/apt/lists/*
 
-# Configure timezone
-RUN ln -snf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
+# Copy requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local
-
-# Copy application code
+# Copy app files
 COPY . /app
 
-# Create required directories
-RUN mkdir -p /data /cron && chmod 755 /data /cron
+# Permissions
+RUN chmod +x /app/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 
-# Expose required port
+# Cron setup
+RUN chmod 0644 /app/cron/2fa-cron && \
+    cp /app/cron/2fa-cron /etc/cron.d/2fa-cron && \
+    crontab /etc/cron.d/2fa-cron
+
 EXPOSE 8080
 
-# Run entrypoint script
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
